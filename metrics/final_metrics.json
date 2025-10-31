@@ -1,0 +1,16 @@
+{
+    "data_source": "OpenSlide Test Data",
+    "tumor_burden_percent": 85.601464,
+    "tumor_pixels": 21400366,
+    "total_tissue_pixels": 25000000,
+    "num_tumor_regions": 127,
+    "largest_region_area": 21362635.5,
+    "average_region_area": 169551.16141732284,
+    "training_epochs": 10,
+    "best_training_loss": 0.5222578097497468,
+    "final_supervised_loss": 0.20283784100835303,
+    "final_unsupervised_loss": 0.7089085518258863,
+    "model_parameters": 31043521,
+    "labeled_patches": 396,
+    "unlabeled_patches": 14440
+}

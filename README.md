@@ -1,64 +1,131 @@
-# Tumor_Segmentation
-# Semi-Supervised Tumor Segmentation
+Semi-Supervised Segmentation of WSI via Consistency Regularization
 
-> U-Net + FixMatch for tumor detection in gigapixel pathology images. **Train with 1 labeled + 10 unlabeled slides.**
-> - Developed end-to-end tumor segmentation pipeline for gigapixel whole slide images (WSI) using 
-  U-Net architecture with FixMatch semi-supervised learning, reducing annotation costs by 90% 
-  while achieving 23.41% tumor burden accuracy on pathology slides
+📌 Project Overview
 
-- Implemented patch-based deep learning framework processing 5,000×5,000 pixel regions through 
-  OpenSlide, utilizing sliding window inference with 50% overlap averaging to eliminate edge 
-  artifacts and achieve seamless segmentation across 14,892 unlabeled tissue patches
+This project implements a Semi-Supervised Learning (SSL) pipeline for the semantic segmentation of Whole Slide Images (WSI). Addressing the scarcity of pixel-level annotations in computational pathology, this framework leverages a Teacher-Student architecture with Consistency Regularization (inspired by FixMatch) to learn from massive amounts of unlabeled data.
 
-- Engineered FixMatch pseudo-labeling algorithm with 95% confidence thresholding and consistency 
-  regularization using weak/strong augmentation strategies (ColorJitter, ElasticTransform), 
-  leveraging 9.8:1 unlabeled-to-labeled data ratio for robust model training
+The core objective was to evaluate the efficacy of SSL when applied to histopathology data and to stress-test the algorithm's robustness against biological domain shift.
 
-- Optimized training pipeline on NVIDIA A100 GPU (80GB) with AdamW optimizer and cosine annealing 
-  scheduler, achieving 67% supervised loss reduction in 15 minutes and automated tumor burden 
-  quantification with connected component analysis for 87 detected regions
+🔬 Key Features
 
-## 🚀 Quick Start
+WSI Preprocessing: Automated patching of gigapixel .ndpi slides using OpenSlide.
 
-```bash
-pip install torch albumentations opencv-python openslide-python
-jupyter notebook ssl_tumor_segmentation.ipynb
-```
+Tissue Detection: HSV-based color filtering to discard background glass and retain only biological tissue.
 
-## 📊 Results
+Architecture: U-Net backbone with a ResNet-style encoder path.
 
-- **Training**: 1 labeled + 10 unlabeled slides (15 min on A100)
-- **Inference**: 4.7 sec per 5K×5K image
-- **Output**: Tumor burden 23.41%, 87 regions detected
+SSL Strategy:
 
-## 🏗️ Architecture
+Weak Augmentation (Teacher): Flips/Rotations to generate Pseudo-Labels.
 
-```
-WSI → 5K Regions → 256×256 Patches → U-Net+FixMatch → Segmentation Mask
-```
+Strong Augmentation (Student): Gaussian Blur/Noise to force consistency.
 
-**U-Net**: 31M params, encoder-decoder with skip connections  
-**FixMatch**: Weak aug → pseudo-labels (95% confidence) + Strong aug → consistency loss
+Confidence Thresholding: Only high-confidence predictions ($p > 0.70$) contribute to the loss.
 
-## 📁 Structure
+🧪 Experimental Design & "Negative Transfer" Study
 
-```
-data/wsi_raw/         # Input WSI files (.svs, .ndpi)
-models/checkpoints/   # Saved model weights
-results/predictions/  # Output segmentation masks
-```
+A critical component of this project was investigating the impact of Domain Shift on Semi-Supervised Learning.
 
-## 🔧 Config
+Dataset Configuration
 
-```python
-PATCH_SIZE = 256
-BATCH_SIZE_LABELED = 16
-BATCH_SIZE_UNLABELED = 64
-CONFIDENCE_THRESHOLD = 0.95
-```
+Labeled Data (Source): Glioma (Brain Tumor) tissue from Kaggle.
 
-## 🛠️ Tech Stack
+Unlabeled Data (Target): Camelyon16/17 (Breast/Lymph Node) tissue from Whole Slide Images.
 
-PyTorch • OpenSlide • Albumentations • A100 GPU
+Hypothesis
 
----
+Standard SSL theory suggests that adding unlabeled data improves generalization. However, in medical imaging, we hypothesized that if the histological phenotype (tissue type) differs significantly between labeled and unlabeled sets, the model might suffer from Negative Transfer.
+
+Results
+
+Experiment Stage
+
+Dice Score
+
+Observation
+
+Stage 1: Supervised Baseline
+
+0.8834
+
+Trained only on labeled Glioma data.
+
+Stage 2: SSL Fine-Tuning
+
+0.8600
+
+Fine-tuned with unlabeled Breast/Lymph patches.
+
+📉 Analysis: The "Negative Transfer" Phenomenon
+
+The slight decrease in performance ($-0.0234$) confirms the sensitivity of SSL to domain alignment.
+
+Teacher Confusion: The Teacher model, trained on brain tissue, generated noisy pseudo-labels when processing breast tissue structures (e.g., misclassifying milk ducts as tumor features).
+
+Student Corruption: The Student model learned these noisy correlations, slightly degrading its ability to segment the original brain tissue test set.
+
+Conclusion: "Unlabeled data is not free." For SSL to succeed in pathology, strict histological alignment between the labeled and unlabeled distributions is required. This experiment serves as a baseline for future work using matched TCGA-GBM data.
+
+🛠️ Technology Stack
+
+Deep Learning: PyTorch, Torchvision
+
+Architecture: U-Net
+
+Augmentations: Albumentations (Spatial & Pixel-level)
+
+WSI Handling: OpenSlide, Pillow, OpenCV
+
+Visualization: Matplotlib
+
+🚀 Usage
+
+1. Prerequisites
+
+# Install PyTorch and Dependencies
+pip install torch torchvision albumentations opencv-python-headless
+# Install OpenSlide (Linux/Colab)
+apt-get install openslide-tools
+pip install openslide-python
+
+
+2. Pipeline Execution
+
+The pipeline is designed to run in three sequential phases:
+
+Phase 0: Ingestion
+Downloads raw WSI files and extracts $224 \times 224$ tissue patches.
+
+# (Logic contained in notebook)
+extract_patches(slide_path, DEST_DIR)
+
+
+Phase 1: Baseline Training
+Trains the U-Net on the limited labeled dataset using Supervised Loss (Dice + BCE).
+
+# Training Loop
+train_epoch(model, optimizer, epoch, is_ssl=False)
+
+
+Phase 2: SSL Fine-Tuning
+Loads the Teacher weights and resumes training using the Unlabeled stream and Consistency Loss.
+
+# SSL Loop
+train_epoch(model, optimizer, epoch, is_ssl=True)
+
+
+📊 Visualizations
+
+The model outputs segmentation masks comparing:
+
+Original Image
+
+Ground Truth Mask
+
+Predicted Segmentation
+
+
+
+👤 Author
+
+Aaditya Rao: Experimenting with the boundaries of Semi-Supervised Learning in Medical AI.

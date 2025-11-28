@@ -24,11 +24,11 @@ Confidence Thresholding: Only high-confidence predictions ($p > 0.70$) contribut
 
 🧪 Experimental Design & "Negative Transfer" Study
 
-A critical component of this project was investigating the impact of Domain Shift on Semi-Supervised Learning.
+A critical component of this project was investigating the impact of Different Data Shift on Semi-Supervised Learning.
 
 Dataset Configuration
 
-Labeled Data (Source): Glioma (Brain Tumor) tissue from Kaggle.
+Labeled Data (Source): Breast tumor tissue from Kaggle.
 
 Unlabeled Data (Target): Camelyon16/17 (Breast/Lymph Node) tissue from Whole Slide Images.
 
@@ -48,7 +48,7 @@ Stage 1: Supervised Baseline
 
 0.8834
 
-Trained only on labeled Glioma data.
+Trained only on labeled kaggle data.
 
 Stage 2: SSL Fine-Tuning
 
@@ -58,11 +58,11 @@ Fine-tuned with unlabeled Breast/Lymph patches.
 
 📉 Analysis: The "Negative Transfer" Phenomenon
 
-The slight decrease in performance ($-0.0234$) confirms the sensitivity of SSL to domain alignment.
+The slight decrease in performance ($-0.0234$) confirms the sensitivity of SSL to data alignment alignment.
 
 Teacher Confusion: The Teacher model, trained on brain tissue, generated noisy pseudo-labels when processing breast tissue structures (e.g., misclassifying milk ducts as tumor features).
 
-Student Corruption: The Student model learned these noisy correlations, slightly degrading its ability to segment the original brain tissue test set.
+Student Corruption: The Student model learned these noisy correlations, slightly degrading its ability to segment the original breast tissue test set.
 
 Conclusion: "Unlabeled data is not free." For SSL to succeed in pathology, strict histological alignment between the labeled and unlabeled distributions is required. This experiment serves as a baseline for future work using matched TCGA-GBM data.
 
